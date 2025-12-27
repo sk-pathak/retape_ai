@@ -85,7 +85,6 @@ Configuration via `internal/config/config.go`:
 | ChunkDuration | 20ms | Audio chunk size |
 | BeepMinFreq | 600 Hz | Min beep frequency |
 | BeepMaxFreq | 2500 Hz | Max beep frequency |
-| BeepMinDuration | 300ms | Min beep length to confirm |
 | SilenceThreshold | 0.01 | RMS threshold for silence |
 | SilenceMinDur | 500ms | Min silence to start tracking |
 | BeepWaitTimeout | 2s | Default wait after silence |

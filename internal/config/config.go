@@ -19,7 +19,6 @@ type Config struct {
 	// Beep detection settings
 	BeepMinFreq      float64
 	BeepMaxFreq      float64
-	BeepMinDuration  time.Duration
 	BeepMinAmplitude float64
 
 	// Silence detection settings
@@ -46,7 +45,6 @@ func DefaultConfig() *Config {
 
 		BeepMinFreq:      600.0,
 		BeepMaxFreq:      2500.0,
-		BeepMinDuration:  300 * time.Millisecond,
 		BeepMinAmplitude: 0.02,
 		SilenceThreshold: 0.01,
 		SilenceMinDur:    500 * time.Millisecond,

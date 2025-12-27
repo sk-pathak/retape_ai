@@ -28,7 +28,7 @@ type BeepDetector struct {
 }
 
 func NewBeepDetector(cfg *config.Config, sampleRate int) *BeepDetector {
-	minHits := int(200*time.Millisecond / cfg.ChunkDuration)
+	minHits := int(150*time.Millisecond / cfg.ChunkDuration)
 	if minHits < 5 {
 		minHits = 5
 	}
