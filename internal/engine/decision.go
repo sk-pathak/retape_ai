@@ -22,6 +22,7 @@ type Result struct {
 	Signals             []Signal
 	Transcript          string
 	DecisionMadeAt      time.Duration
+	DeadAir             time.Duration
 }
 
 const PostBeepVerifyDuration = 500 * time.Millisecond
@@ -206,12 +207,21 @@ func (e *DecisionEngine) checkForDecision(currentTime time.Duration) {
 
 func (e *DecisionEngine) makeDecision(dropTime time.Duration, reason string, decisionTime time.Duration) {
 	e.decisionMade = true
+	
+	var deadAir time.Duration
+	if e.firstSilenceAt > 0 {
+		deadAir = decisionTime - e.firstSilenceAt
+	} else if e.beepDetected != nil {
+		deadAir = decisionTime - e.beepDetected.EndTime
+	}
+	
 	e.decisionResult = &Result{
 		RecommendedDropTime: dropTime,
 		Reason:              reason,
 		Signals:             e.signals,
 		Transcript:          e.transcript,
 		DecisionMadeAt:      decisionTime,
+		DeadAir:             deadAir,
 	}
 }
 
@@ -236,12 +246,18 @@ func (e *DecisionEngine) makeFinalDecision(totalDuration time.Duration) {
 		reason = "No clear signal - using fallback (90% of duration)"
 	}
 
+	var deadAir time.Duration
+	if e.firstSilenceAt > 0 {
+		deadAir = totalDuration - e.firstSilenceAt
+	}
+	
 	e.decisionResult = &Result{
 		RecommendedDropTime: dropTime,
 		Reason:              reason,
 		Signals:             e.signals,
 		Transcript:          e.transcript,
 		DecisionMadeAt:      totalDuration,
+		DeadAir:             deadAir,
 	}
 }
 
@@ -292,9 +308,12 @@ func FormatResult(filename string, result *Result) string {
 		output += fmt.Sprintf("Transcript: %s\n", transcript)
 	}
 
-	output += fmt.Sprintf("\n✓ Recommended drop timestamp: %.2fs\n", result.RecommendedDropTime.Seconds())
+	output += fmt.Sprintf("\n✓ Ideal drop time: %.2fs\n", result.RecommendedDropTime.Seconds())
 	output += fmt.Sprintf("  Reason: %s\n", result.Reason)
 	output += fmt.Sprintf("  Decision made at: %.2fs into stream\n", result.DecisionMadeAt.Seconds())
+	if result.DeadAir > 0 {
+		output += fmt.Sprintf("  Dead air: %.2fs\n", result.DeadAir.Seconds())
+	}
 
 	return output
 }

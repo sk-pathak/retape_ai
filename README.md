@@ -47,24 +47,8 @@ echo "DEEPGRAM_API_KEY=your-api-key-here" > .env
 
 ## Architecture
 
-Audio is streamed in 20ms chunks. Each chunk is processed by three detectors:
-
-```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Beep      │     │   Silence    │     │   Phrase     │
-│  Detector   │     │  Detector    │     │  Detector    │
-│  (FFT)      │     │  (RMS)       │     │  (STT)       │
-└──────┬──────┘     └──────┬───────┘     └──────┬───────┘
-       │                   │                    │
-       └───────────────────┼────────────────────┘
-                           ▼
-                  ┌─────────────────┐
-                  │ Decision Engine │
-                  │ (Signal Fusion) │
-                  └────────┬────────┘
-                           ▼
-                    Drop Timestamp
-```
+Audio is streamed in 20ms chunks. Each chunk is processed by three detectors.
+![alt text](architecture.png)
 
 ### Detection Methods
 
@@ -76,12 +60,14 @@ Audio is streamed in 20ms chunks. Each chunk is processed by three detectors:
 
 ### Decision Priority
 
+![alt text](priority_decision.png)
+
 | Priority | Condition | Action |
 |----------|-----------|--------|
-| 1 | Beep detected | Drop immediately after beep ends |
+| 1 | Beep detected + verified | Wait 500ms, then drop after beep |
 | 2 | End phrase + silence (no beep mentioned) | Wait 1s, then drop |
 | 3 | Phrase says "after the beep/tone" | Wait up to 5s for beep |
-| 4 | Confirmed silence after speech | Wait 3s (configurable), then drop |
+| 4 | Confirmed silence after speech | Wait 2s (configurable), then drop |
 
 ## Key Design Decisions
 
@@ -102,7 +88,7 @@ Configuration via `internal/config/config.go`:
 | BeepMinDuration | 300ms | Min beep length to confirm |
 | SilenceThreshold | 0.01 | RMS threshold for silence |
 | SilenceMinDur | 500ms | Min silence to start tracking |
-| BeepWaitTimeout | 3s | Default wait after silence |
+| BeepWaitTimeout | 2s | Default wait after silence |
 
 ## Limitations & Trade-offs
 

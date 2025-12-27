@@ -51,7 +51,7 @@ func DefaultConfig() *Config {
 		SilenceThreshold: 0.01,
 		SilenceMinDur:    500 * time.Millisecond,
 
-		BeepWaitTimeout: 3 * time.Second,
+		BeepWaitTimeout: 2 * time.Second,
 
 		DeepgramAPIKey: apiKey,
 		EnableSTT:      apiKey != "",
