@@ -11,7 +11,7 @@ import (
 )
 
 type Signal struct {
-	Type      string        // "beep", "silence", "phrase"
+	Type      string // "beep", "silence", "phrase"
 	Timestamp time.Duration
 	Details   string
 }
@@ -42,9 +42,9 @@ type DecisionEngine struct {
 	expectsBeep     bool
 	phraseTime      time.Duration
 	firstSilenceAt  time.Duration
-	
-	decisionMade    bool
-	decisionResult  *Result
+
+	decisionMade   bool
+	decisionResult *Result
 }
 
 func NewDecisionEngine(cfg *config.Config, sampleRate int) *DecisionEngine {
@@ -129,7 +129,7 @@ func (e *DecisionEngine) processChunk(chunk audio.AudioChunk, sttEnabled bool) {
 	// Check if speech resumed after a beep (=> intermediate beep)
 	if e.beepDetected != nil && e.beepConfirmedAt == 0 {
 		timeSinceBeep := chunk.Timestamp - e.beepDetected.EndTime
-		
+
 		// If silence detector indicates speech is happening, reset the beep
 		if timeSinceBeep > 0 && timeSinceBeep < PostBeepVerifyDuration {
 			if silenceEvent == nil && !e.silenceDetector.IsInSilence() {
@@ -207,14 +207,14 @@ func (e *DecisionEngine) checkForDecision(currentTime time.Duration) {
 
 func (e *DecisionEngine) makeDecision(dropTime time.Duration, reason string, decisionTime time.Duration) {
 	e.decisionMade = true
-	
+
 	var deadAir time.Duration
 	if e.firstSilenceAt > 0 {
 		deadAir = decisionTime - e.firstSilenceAt
 	} else if e.beepDetected != nil {
 		deadAir = decisionTime - e.beepDetected.EndTime
 	}
-	
+
 	e.decisionResult = &Result{
 		RecommendedDropTime: dropTime,
 		Reason:              reason,
@@ -250,7 +250,7 @@ func (e *DecisionEngine) makeFinalDecision(totalDuration time.Duration) {
 	if e.firstSilenceAt > 0 {
 		deadAir = totalDuration - e.firstSilenceAt
 	}
-	
+
 	e.decisionResult = &Result{
 		RecommendedDropTime: dropTime,
 		Reason:              reason,
@@ -263,24 +263,27 @@ func (e *DecisionEngine) makeFinalDecision(totalDuration time.Duration) {
 
 func (e *DecisionEngine) processTranscripts() {
 	for event := range e.stt.Results() {
-		e.transcript += " " + event.Text
+
+		if event.IsFinal {
+			e.transcript += " " + event.Text
+		}
 
 		if phraseEvent := e.phraseDetector.Process(event.Text, event.Timestamp); phraseEvent != nil {
-			e.phraseFound = true
-			if e.phraseTime == 0 {
+			if !e.phraseFound {
+				e.phraseFound = true
 				e.phraseTime = phraseEvent.Timestamp
+
+				phrase := strings.ToLower(phraseEvent.Phrase)
+				if strings.Contains(phrase, "beep") || strings.Contains(phrase, "tone") {
+					e.expectsBeep = true
+				}
+
+				e.signals = append(e.signals, Signal{
+					Type:      "phrase",
+					Timestamp: phraseEvent.Timestamp,
+					Details:   fmt.Sprintf("matched: '%s'", phraseEvent.Phrase),
+				})
 			}
-			
-			phrase := strings.ToLower(phraseEvent.Phrase)
-			if strings.Contains(phrase, "beep") || strings.Contains(phrase, "tone") {
-				e.expectsBeep = true
-			}
-			
-			e.signals = append(e.signals, Signal{
-				Type:      "phrase",
-				Timestamp: phraseEvent.Timestamp,
-				Details:   fmt.Sprintf("matched: '%s'", phraseEvent.Phrase),
-			})
 		}
 	}
 }
