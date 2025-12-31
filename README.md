@@ -1,8 +1,6 @@
-# Voicemail Greeting End Detector
+# BeepBreak
 
-> **Task Assignment**: Detect the optimal moment to drop a compliant voicemail message after a customer's greeting ends.
-
-A real-time audio processing system that identifies when a voicemail greeting ends by fusing beep detection, silence analysis, and speech-to-text signals. Built for production-like streaming scenarios where audio arrives chunk-by-chunk.
+BeepBreak is a real-time audio processing system that identifies when a voicemail greeting ends by fusing beep detection, silence analysis, and speech-to-text signals. Built for production-like streaming scenarios where audio arrives chunk-by-chunk.
 
 ## Problem Summary
 
@@ -25,7 +23,7 @@ When an outbound call goes to voicemail, the system must determine exactly when 
 ```bash
 # Clone and build
 git clone <repo-url>
-cd retape_ai
+cd beepBreak
 go build -o detector ./cmd/detector
 ```
 
@@ -71,7 +69,7 @@ Audio is streamed in 20ms chunks. Each chunk is processed by three detectors.
 
 ## Key Design Decisions
 
-1. **Streaming over buffering**: Real phone calls stream audio—can't wait for call to end
+1. **Streaming over buffering**: Real phone calls stream audio, can't wait for call to end
 2. **2-second sustained silence**: Prevents false triggers from natural speech pauses
 3. **600 Hz lower bound for beep**: Avoids false positives from male voice fundamentals
 4. **Priority-based logic**: Beeps are definitive; scoring systems could incorrectly downweight clear beeps
